@@ -1,5 +1,5 @@
 # joe
-Java Chess Engine
+Java Chess Engine - work in progress
 
 Traditional Chess Engine using :-
 
@@ -9,5 +9,6 @@ Traditional Chess Engine using :-
 - History Table
 - PV Search
 - UCI Compliant
+- Spilt into client/Server using Active MQ
 
 It's weak but it beats me..
