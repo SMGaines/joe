@@ -574,7 +574,7 @@ public class Joe
 	
 	public void processMessage(String msg)
 	{
-		System.out.println("Joe: received "+msg);
+		System.out.println("Joe: Received "+msg);
 		int index = msg.indexOf(MQConstants.fieldSeparator);
 		if (index == -1)
 			return;
