@@ -7,8 +7,10 @@ package com.smg.joe.server;
 import java.util.Random;
 
 import com.smg.joe.common.*;
+import com.smg.joe.mq.MQCallback;
+import com.smg.joe.mq.MQHandler;
 
-public class Joe
+public class Joe implements MQCallback
 {
 	int historyIncrement = 10;
 	
@@ -62,8 +64,7 @@ public class Joe
 	
 	boolean usingPV;
 	
-	RcvFromUCI rUCI;
-	static AMQClient qClient;
+	MQHandler mq;
 	
 	int numTCIterations;
 	int totalTCAverages;
@@ -93,9 +94,8 @@ public class Joe
 
 	void initialiseQueues()
 	{
-		thread(new RcvFromUCI(this,MQConstants.toEngineQueueName),true);	
-		qClient = new AMQClient();
-		qClient.connectToSendQ(MQConstants.fromEngineQueueName);
+		mq = new MQHandler(this,MQCallback.fromEngineQueueName,MQCallback.toEngineQueueName);
+		thread(mq,true);		
 	}
 	
 	// Find the best move for 'colour' within a max of time4Move ms
@@ -240,7 +240,7 @@ public class Joe
 	
 	void updateUCI(String msg)
 	{
-		qClient.sendMessage(msg);
+		mq.sendMessage(msg);
 		System.out.println(msg);
 	}
 	
@@ -258,12 +258,13 @@ public class Joe
 	   
 		long brdHash = brd.getBoardHash();
 		TranspositionEntry te = getTransTableEntry(brdHash);
-/*		if (inWindow(te.getScore()) && te.getBoardHash() == brdHash && (fullSearchDepth-depth)<=te.getDepth())
+		if (inWindow(te.getScore()) && te.getBoardHash() == brdHash && (fullSearchDepth-depth)<=te.getDepth())
 		{
 			numTransHits++;
 		    pvLength[depth] = depth-1;
 			return te.getScore();
-		}*/
+		}
+		
 	    pvLength[depth] = depth;
 	    
 		if (depth == fullSearchDepth) 
@@ -567,6 +568,10 @@ public class Joe
 	{
 	    return transTable[(int)(Math.abs(aHash)%transTableSize)];
 	}
+	public void rcvMessage(String msg)
+	{
+		processMessage(msg);
+	}
 
 	// We're expecting a String in the following format e.g.
 	// Time-For-Move/Move Sequence
@@ -575,7 +580,7 @@ public class Joe
 	public void processMessage(String msg)
 	{
 		System.out.println("Joe: Received "+msg);
-		int index = msg.indexOf(MQConstants.fieldSeparator);
+		int index = msg.indexOf(MQCallback.fieldSeparator);
 		if (index == -1)
 			return;
 		String strTime = msg.substring(0, index);

@@ -2,8 +2,10 @@ package com.smg.joe.client;
 import java.util.*;
 
 import com.smg.joe.common.*;
+import com.smg.joe.mq.MQCallback;
+import com.smg.joe.mq.MQHandler;
 
-public class UCI 
+public class UCI implements MQCallback
 {
 	static final int TOKEN_NOT_FOUND = -1;
 	static final String versionStr = "v0.95";
@@ -30,9 +32,9 @@ public class UCI
 	
 	static String uciCommandStr,uciCommandArgs;
 	
-	static AMQClient qClient;
-
 	String moveStr;
+	
+	MQHandler mq;
 	
 	public void initialise()
 	{
@@ -52,14 +54,9 @@ public class UCI
 	
 	void initialiseQueues()
 	{
-		log("UCI: Starting queues");		
-		qClient = new AMQClient();
-		boolean success = qClient.connectToSendQ(MQConstants.toEngineQueueName);
-		if (!success)
-		{
-			log("UCI: Client queue setup failed");
-		}
-		thread(new RcvFromEngine(this,MQConstants.fromEngineQueueName),true);		
+		log("UCI: Starting queues");	
+		mq = new MQHandler(this,MQCallback.toEngineQueueName,MQCallback.fromEngineQueueName);
+		thread(mq,true);		
 		log("UCI: Completed queue init");		
 	}
 	
@@ -212,9 +209,14 @@ public class UCI
 	
 	public void think(int time4Move)
 	{
-		qClient.sendMessage(time4Move+MQConstants.fieldSeparator+moveStr);
+		mq.sendMessage(time4Move+MQCallback.fieldSeparator+moveStr);
 	}
 	
+	public void rcvMessage(String msg)
+	{
+		writeUCI(msg);
+	}
+
 	public void writeUCI(String msg)
 	{
 		System.out.println(msg);
