@@ -209,11 +209,6 @@ public class MoveGenerator
 		return numMoves[depth];
 	}
 	 
-	public void setScore(int depth,int index,int aScore)
-	{
-		moveList[depth][index].setScore(aScore);
-	}
-	 
 	public Move getMove(int depth,int index)
 	{
 		return moveList[depth][index];

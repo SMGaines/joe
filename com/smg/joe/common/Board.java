@@ -338,7 +338,7 @@ public class Board
 			 numHashEntries --;
 	 }
 	 
-	 boolean inEndGame()
+	boolean inEndGame()
 	 {
 		 return currentMoveNum > 30;
 	 }

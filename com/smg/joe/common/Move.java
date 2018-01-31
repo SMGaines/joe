@@ -14,7 +14,6 @@ public class Move
 	
 	int from;
 	int to;
-	int score;
 	int piece;
 	int capturedPiece;
 	int queeningPiece;
@@ -24,7 +23,6 @@ public class Move
 		from=0;
 		to=0;
 		piece = 0;
-		score=0;
 		capturedPiece=Board.EM;
 		queeningPiece=Board.WQ;
 	}
@@ -34,7 +32,6 @@ public class Move
 		piece = aPiece;
 		from=aFrom;
 		to=aTo;
-		score = 0;
 		capturedPiece=aCapture;
 		queeningPiece=Board.WQ;
 	}
@@ -44,7 +41,6 @@ public class Move
 		piece = aPiece;
 		from=aFrom;
 		to=aTo;
-		score = 0;
 		capturedPiece=Board.EM;
 		queeningPiece=Board.WQ;
 	}
@@ -66,7 +62,6 @@ public class Move
 		m1.piece = m2.piece;
 		m1.from=m2.from;
 		m1.to=m2.to;
-		m1.score = m2.score;
 		m1.capturedPiece=m2.capturedPiece;
 		m1.queeningPiece=m2.queeningPiece;
 	}
@@ -114,11 +109,6 @@ public class Move
 		piece=aPiece;
 	}
 	
-	public void setScore(int aScore)
-	{
-		score=aScore;
-	}
-	
 	public void setCapture(int aCapture)
 	{
 		capturedPiece = aCapture;
@@ -142,11 +132,6 @@ public class Move
 	public int getCapture()
 	{
 		return capturedPiece;
-	}
-	
-	public int getScore()
-	{
-		return score;
 	}
 	
 	public String getString()
@@ -200,5 +185,4 @@ public class Move
 		}
 		return moves;
 	}
-
 }

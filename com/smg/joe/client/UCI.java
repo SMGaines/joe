@@ -1,5 +1,4 @@
 package com.smg.joe.client;
-import java.util.*;
 
 import com.smg.joe.common.*;
 import com.smg.joe.mq.MQCallback;
@@ -8,7 +7,7 @@ import com.smg.joe.mq.MQHandler;
 public class UCI implements MQCallback
 {
 	static final int TOKEN_NOT_FOUND = -1;
-	static final String versionStr = "v0.95";
+	public static final String versionStr = "v0.97";
 
 	static Log sl;
 	static int whiteTimeLeft;

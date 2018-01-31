@@ -6,6 +6,7 @@ package com.smg.joe.server;
 
 import java.util.Random;
 
+import com.smg.joe.client.UCI;
 import com.smg.joe.common.*;
 import com.smg.joe.mq.MQCallback;
 import com.smg.joe.mq.MQHandler;
@@ -70,6 +71,7 @@ public class Joe implements MQCallback
 	int totalTCAverages;
 	Joe()
 	{
+		System.out.println("Joe "+UCI.versionStr+": Initialising");
 		initHistoryTable();
 		initPV();
 		initTranspositionTable();
@@ -131,6 +133,7 @@ public class Joe implements MQCallback
 			firstPlyScore[i]=0;
 		highestFirstPly = Integer.MIN_VALUE;
 		lowestFirstPly = Integer.MAX_VALUE;
+		
 		// Clear History and Transposition tables
 		// every 10 half-moves
 		if (brd.getMoveNumber()%10 == 0)
@@ -417,7 +420,7 @@ public class Joe implements MQCallback
 					mScore+=UPPER_BOUND;
 			// Order based on previous iteration score normalised to 0-100
 			if (depth==firstPly && highestFirstPly > lowestFirstPly)
-				mScore+=100*((moveOrderScore[i]+lowestFirstPly)/(highestFirstPly-lowestFirstPly));
+				mScore+=100*((moveOrderScore[i]-lowestFirstPly)/(highestFirstPly-lowestFirstPly));
 			if (mScore>bestScore && !historyMoveUsed[depth][i])
 			{
 				bestScore = mScore;
@@ -502,6 +505,13 @@ public class Joe implements MQCallback
 		historyMoveUsed = new boolean[MoveGenerator.maxSearchDepth+1][MoveGenerator.maxMoves];		
 	}
 	
+	void clearHistoryTable()
+	{
+		for (int i=0;i<Board.boardSize;i++)
+			for (int j=0;j<Board.boardSize;j++)
+				history[i][j]=0;		
+	}
+
 	void initPV()
 	{
 		pvLength=new int[MoveGenerator.maxSearchDepth+1];
@@ -542,13 +552,6 @@ public class Joe implements MQCallback
 		return ((100*numTTEntries)/transTableSize);
 	}
 	
-	void clearHistoryTable()
-	{
-		for (int i=0;i<Board.boardSize;i++)
-			for (int j=0;j<Board.boardSize;j++)
-				history[i][j]=0;		
-	}
-
 	boolean scoreIsMate(int score)
 	{
 		return Math.abs(Math.abs(score)-Math.abs(MATE)) < 100;
@@ -568,6 +571,7 @@ public class Joe implements MQCallback
 	{
 	    return transTable[(int)(Math.abs(aHash)%transTableSize)];
 	}
+	
 	public void rcvMessage(String msg)
 	{
 		processMessage(msg);
