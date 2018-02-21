@@ -143,6 +143,11 @@ public class Board
 		return currentMoveNum;
 	}
 	
+	public Move[] getGameMoves()
+	{
+		return gameMoves;
+	}
+	
 	public void makeMove(Move m)
 	{
 		oldHalfMoveClock = halfMoveClock;
@@ -243,6 +248,13 @@ public class Board
 		 hashEntries[numHashEntries++]=zHash;
 	 }
 	
+	public void takeBackLastMove()
+	{
+		if (currentMoveNum==0)
+			return;
+		takeBackMove(gameMoves[currentMoveNum-1]);
+	}
+
 	public void takeBackMove(Move m)
 	 {
 		 halfMoveClock = oldHalfMoveClock;
@@ -338,6 +350,24 @@ public class Board
 			 numHashEntries --;
 	 }
 	 
+	public boolean isLegalMove(Move m,int colour)
+	{
+		MoveGenerator mg = new MoveGenerator();
+		
+	    mg.generateMoveList(this,0,colour,false);
+	    
+	    int numMoves = mg.getNumMoves(0);
+	    if (numMoves == 0)
+	    	return false;
+	    
+	    for (int i=0;i<numMoves;i++)
+	    {
+	    	if (m.isSameMoveAs(mg.getMove(0, i)))
+	    		return true;
+	    }
+	    return false;
+	}
+
 	boolean inEndGame()
 	 {
 		 return currentMoveNum > 30;
@@ -719,8 +749,13 @@ public class Board
 		
 	public static int alg2Square(String sq)
 	{
+		if (sq.length() !=2)
+			return Move.NO_MOVE;
 		int column = 1+"abcdefgh".indexOf(sq.substring(0,1));
 		int row = 2+"87654321".indexOf(sq.substring(1,2));
+		if (column== Move.NO_MOVE || row == Move.NO_MOVE)
+			return Move.NO_MOVE;
+		
 		return row*Board.boardWidth+column;
 	}
 	
@@ -893,7 +928,6 @@ public class Board
 	
 	public int setPosition(String moveStr)
 	{
-		// We currently assume there is always a startpos present in a position command
 		newGame();
 		currentMoveNum = 0;
 		int colToMove=WHITE;

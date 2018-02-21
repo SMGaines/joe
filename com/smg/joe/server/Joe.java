@@ -9,7 +9,7 @@ import java.util.Random;
 import com.smg.joe.client.UCI;
 import com.smg.joe.common.*;
 import com.smg.joe.mq.MQCallback;
-import com.smg.joe.mq.MQHandler;
+import com.smg.joe.mq.RabbitMQHandler;
 
 public class Joe implements MQCallback
 {
@@ -53,7 +53,7 @@ public class Joe implements MQCallback
 	int currentPVLength;
 	int firstPlyScore[];
 	int moveOrderScore[];
-	int highestFirstPly;
+	int moveOrderHighest,moveOrderLowest,firstPlyLowest,firstPlyHighest;
 	int lowestFirstPly;
 	MoveGenerator mg;	
 
@@ -65,13 +65,19 @@ public class Joe implements MQCallback
 	
 	boolean usingPV;
 	
-	MQHandler mq;
+	RabbitMQHandler mq;
 	
 	int numTCIterations;
 	int totalTCAverages;
+	
 	Joe()
 	{
 		System.out.println("Joe "+UCI.versionStr+": Initialising");
+		
+		rnd = new Random(System.currentTimeMillis());
+		
+		//initialiseQueues(mqURL);
+		
 		initHistoryTable();
 		initPV();
 		initTranspositionTable();
@@ -80,12 +86,15 @@ public class Joe implements MQCallback
 		bestMoveThisIteration = new Move();
 		firstPlyScore= new int[MoveGenerator.maxMoves];
 		moveOrderScore= new int[MoveGenerator.maxMoves];
-		
-		rnd = new Random(System.currentTimeMillis());
-		
-		initialiseQueues();
+
 		numTCIterations=0;
 		totalTCAverages=0;
+		System.out.println("Joe: Ready to play");
+	}
+	
+	void setQueue(RabbitMQHandler aMq)
+	{
+		mq=aMq;
 	}
 	
 	void newGame()
@@ -93,13 +102,7 @@ public class Joe implements MQCallback
 		clearHistoryTable();
 		clearTranspositionTable();
 	}
-
-	void initialiseQueues()
-	{
-		mq = new MQHandler(this,MQCallback.fromEngineQueueName,MQCallback.toEngineQueueName);
-		thread(mq,true);		
-	}
-	
+		
 	// Find the best move for 'colour' within a max of time4Move ms
 	// Returns the best move found or null if no moves available
 	
@@ -131,8 +134,10 @@ public class Joe implements MQCallback
 		
 		for (int i=0;i<MoveGenerator.maxMoves;i++)
 			firstPlyScore[i]=0;
-		highestFirstPly = Integer.MIN_VALUE;
-		lowestFirstPly = Integer.MAX_VALUE;
+		firstPlyLowest = Integer.MAX_VALUE;
+		firstPlyHighest = Integer.MIN_VALUE;
+		moveOrderLowest = Integer.MAX_VALUE;
+		moveOrderHighest = Integer.MIN_VALUE;
 		
 		// Clear History and Transposition tables
 		// every 10 half-moves
@@ -226,6 +231,8 @@ public class Joe implements MQCallback
 		    	// so we get good move ordering for the next iteration
 				for (int i=0;i<MoveGenerator.maxMoves;i++)
 					moveOrderScore[i]=firstPlyScore[i];
+				moveOrderHighest=firstPlyHighest;
+				moveOrderLowest=firstPlyLowest;
 		    }
 	    }
 	   endTime = System.currentTimeMillis();
@@ -300,10 +307,10 @@ public class Joe implements MQCallback
 			  if (depth==firstPly)
 			  {
 				  firstPlyScore[bestIndex]=score;
-				  if (score > highestFirstPly)
-					  highestFirstPly = score;
-				  if (score < lowestFirstPly)
-					  lowestFirstPly = score;
+				  if (score > firstPlyHighest)
+					  firstPlyHighest = score;
+				  if (score < firstPlyLowest)
+					  firstPlyLowest = score;
 			  }
 			  
 			  usingPV=false;
@@ -419,8 +426,8 @@ public class Joe implements MQCallback
 			if (usingPV && currentPVLength <= depth && m.isSameMoveAs(currentPV[depth]))
 					mScore+=UPPER_BOUND;
 			// Order based on previous iteration score normalised to 0-100
-			if (depth==firstPly && highestFirstPly > lowestFirstPly)
-				mScore+=100*((moveOrderScore[i]-lowestFirstPly)/(highestFirstPly-lowestFirstPly));
+			if (depth==firstPly && moveOrderHighest > moveOrderLowest)
+				mScore+=100*((moveOrderScore[i]-moveOrderLowest)/(moveOrderHighest-moveOrderLowest));
 			if (mScore>bestScore && !historyMoveUsed[depth][i])
 			{
 				bestScore = mScore;
@@ -584,6 +591,16 @@ public class Joe implements MQCallback
 	public void processMessage(String msg)
 	{
 		System.out.println("Joe: Received "+msg);
+		if (msg.equals(MQCallback.msgConnectFail))
+		{
+			System.out.println("No connection with Message Queue - exiting");
+			System.exit(0);
+		}
+		if (msg.equals(MQCallback.msgReqHandshake))
+		{
+			updateUCI(MQCallback.msgRspHandshake);
+			return;
+		}
 		int index = msg.indexOf(MQCallback.fieldSeparator);
 		if (index == -1)
 			return;
@@ -594,11 +611,4 @@ public class Joe implements MQCallback
 		Move m = findBestMove(moveStr,time4Move);
 		updateUCI("bestmove "+m.getString());
 	}
-	
-    public void thread(Runnable runnable, boolean daemon) 
-    {
-        Thread brokerThread = new Thread(runnable);
-        brokerThread.setDaemon(daemon);
-        brokerThread.start();
-    }
 }

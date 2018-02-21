@@ -163,7 +163,11 @@ public class Move
 	//eg e2e4 to an int move
 	public static Move alg2Move(String moveStr)
 	{
-		return new Move(0,Board.alg2Square(moveStr.substring(0,2)),Board.alg2Square(moveStr.substring(2,4)));
+		int from = Board.alg2Square(moveStr.substring(0,2));
+		int to = Board.alg2Square(moveStr.substring(2,4));
+		if (from == NO_MOVE || to == NO_MOVE)
+			return null;
+		return new Move(0,from,to);
 	}
 	
 	public static ArrayList<Move> string2Moves(String moveStr)

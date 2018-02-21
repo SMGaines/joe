@@ -1,15 +1,13 @@
 package com.smg.joe.client;
 
-import com.smg.joe.common.*;
 import com.smg.joe.mq.MQCallback;
-import com.smg.joe.mq.MQHandler;
+import com.smg.joe.mq.RabbitMQHandler;
 
 public class UCI implements MQCallback
 {
 	static final int TOKEN_NOT_FOUND = -1;
 	public static final String versionStr = "v0.97";
 
-	static Log sl;
 	static int whiteTimeLeft;
 	static int blackTimeLeft;
 	
@@ -33,14 +31,12 @@ public class UCI implements MQCallback
 	
 	String moveStr;
 	
-	MQHandler mq;
+	RabbitMQHandler mq;
 	
-	public void initialise()
+	public void initialise(String mqURL)
 	{
-		sl = new Log();
-		sl.openLog();
 		log("UCI: Starting log");
-		initialiseQueues();
+		initialiseQueues(mqURL);
 		moveStr="";
 		startUCIListener();
 	}
@@ -51,17 +47,16 @@ public class UCI implements MQCallback
 		thread(new UCIInput(this),true);		
 	}
 	
-	void initialiseQueues()
+	void initialiseQueues(String mqURL)
 	{
 		log("UCI: Starting queues");	
-		mq = new MQHandler(this,MQCallback.toEngineQueueName,MQCallback.fromEngineQueueName);
+		mq = new RabbitMQHandler(this,MQCallback.mqFromEngineQueueName,MQCallback.mqToEngineQueueName);
 		thread(mq,true);		
 		log("UCI: Completed queue init");		
 	}
 	
 	void shutdown()
 	{
-		sl.closeLog();		
 	}
 	
 	int processUCICommand(String uciCmd)
@@ -224,7 +219,6 @@ public class UCI implements MQCallback
 	public void log(String msg)
 	{
 		System.out.println(msg);
-		sl.log(msg);
 	}
 	
     public void thread(Runnable runnable, boolean daemon) 

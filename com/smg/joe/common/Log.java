@@ -13,11 +13,6 @@ public class Log
     static FileWriter logFile;
     static BufferedWriter logger;
 
-	public Log()
-	{
-		
-	}
-	
 	public void openLog()
 	{
 	    try
