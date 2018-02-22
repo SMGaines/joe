@@ -9,6 +9,7 @@ public class Move
 	
 	public static final String[] whitePieceStr = {"","P","N","B","R","Q","K"};
 	public static final String[] blackPieceStr = {"","p","n","b","r","q","k"};
+	public static final String[] pieceNames = {"","pawn","knight","bishop","rook","queen","king"};
 	
 	public static int[] pieceValue = {0,100,300,320,500,900,10000};
 	
@@ -65,7 +66,12 @@ public class Move
 		m1.capturedPiece=m2.capturedPiece;
 		m1.queeningPiece=m2.queeningPiece;
 	}
-	
+
+	public static String getPieceName(int aPiece)
+	{
+		return pieceNames[aPiece];
+	}
+
 	public int getQueeningPiece()
 	{
 		return queeningPiece;
@@ -174,6 +180,8 @@ public class Move
 	{
 		// Convert a UCI move string to an arraylist of moves
 		ArrayList<Move> moves = new ArrayList<Move>();
+		if (moveStr.length() < 4)
+			return moves;
 		String mStr = moveStr;
 		while (true)
 		{

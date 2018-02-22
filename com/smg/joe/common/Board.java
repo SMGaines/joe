@@ -507,6 +507,20 @@ public class Board
 		return zHash;
 	}
 	
+	public boolean isStaleMate(int colour)
+	{
+        MoveGenerator mg=new MoveGenerator();
+        mg.generateMoveList(this,0,colour,false);
+        return (mg.getNumMoves(0)==0 && !inCheck(colour));
+	}
+	
+	public boolean isCheckMate(int colour)
+	{
+        MoveGenerator mg=new MoveGenerator();
+        mg.generateMoveList(this,0,colour,false);
+        return (mg.getNumMoves(0)==0 && inCheck(colour));
+	}
+	
 	public boolean isThreefoldRepetition()
 	{
 		int count = 0;

@@ -6,7 +6,7 @@ import com.smg.joe.mq.RabbitMQHandler;
 public class UCI implements MQCallback
 {
 	static final int TOKEN_NOT_FOUND = -1;
-	public static final String versionStr = "v0.97";
+	public static final String versionStr = "v0.99";
 
 	static int whiteTimeLeft;
 	static int blackTimeLeft;
